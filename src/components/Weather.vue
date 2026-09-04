@@ -218,29 +218,33 @@ const getWeatherData = async () => {
 
     // 无浏览器定位：回退高德 IP 定位
     if (mainKey) {
-      const adCode = await getAdcode(mainKey);
-      console.log(adCode);
-      const adcode = adCode.adcode;
-      if (
-        adCode.infocode === "10000" &&
-        adcode &&
-        !(Array.isArray(adcode) && adcode.length === 0)
-      ) {
-        const result = await getWeather(mainKey, adcode);
-        console.log("IP 定位天气结果:", result);
-        if (result.lives?.length) {
-          weatherData.adCode = {
-            city: adCode.city || result.lives[0].city || "未知地区",
-            adcode,
-          };
-          weatherData.weather = {
-            weather: result.lives[0].weather,
-            temperature: result.lives[0].temperature,
-            winddirection: result.lives[0].winddirection,
-            windpower: result.lives[0].windpower,
-          };
-          return;
+      try {
+        const adCode = await getAdcode(mainKey);
+        console.log(adCode);
+        const adcode = adCode.adcode;
+        if (
+          adCode.infocode === "10000" &&
+          adcode &&
+          !(Array.isArray(adcode) && adcode.length === 0)
+        ) {
+          const result = await getWeather(mainKey, adcode);
+          console.log("IP 定位天气结果:", result);
+          if (result.lives?.length) {
+            weatherData.adCode = {
+              city: adCode.city || result.lives[0].city || "未知地区",
+              adcode,
+            };
+            weatherData.weather = {
+              weather: result.lives[0].weather,
+              temperature: result.lives[0].temperature,
+              winddirection: result.lives[0].winddirection,
+              windpower: result.lives[0].windpower,
+            };
+            return;
+          }
         }
+      } catch (err) {
+        console.warn("高德 IP 定位失败，改用备用接口:", err);
       }
     }
 
