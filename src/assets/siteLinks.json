@@ -2,7 +2,7 @@
   {
     "icon": "Compass",
     "name": "起始页",
-    "link": "https://www.lrht.cc/"
+    "link": ""
   },
   {
     "icon": "Blog",
@@ -20,11 +20,6 @@
     "link": "https://sq.lrht.cc/"
   },
   {
-    "icon": "Fire",
-    "name": "今日热点",
-    "link": "https://hot.lrht.cc"
-  },
-  {
     "icon": "CloudSunRain",
     "name": "雨云",
     "link": "https://www.rainyun.com/Lrht_"
@@ -33,10 +28,5 @@
     "icon": "Fish",
     "name": "爱发电",
     "link": "https://afdian.com/a/lrht-llw"
-  },
-  {
-    "icon": "Music",
-    "name": "音乐",
-    "link": ""
   }
 ]

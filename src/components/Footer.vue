@@ -9,7 +9,7 @@
             -
           </span>
           {{ fullYear }}
-          <a :href="siteUrl">{{ siteAnthor }}</a>
+          <a href="https://github.com/Lrht-llw" target="_blank">{{ siteAnthor }}</a>
         </span>
         <!-- 以下信息请不要修改哦 -->
         <span class="hidden">
@@ -49,15 +49,6 @@ const fullYear = new Date().getFullYear();
 const siteStartDate = ref(import.meta.env.VITE_SITE_START);
 const siteIcp = ref(import.meta.env.VITE_SITE_ICP);
 const siteAnthor = ref(import.meta.env.VITE_SITE_ANTHOR);
-const siteUrl = computed(() => {
-  const url = import.meta.env.VITE_SITE_URL;
-  if (!url) return "https://www.imsyy.top";
-  // 判断协议前缀
-  if (!url.startsWith("http://") && !url.startsWith("https://")) {
-    return "//" + url;
-  }
-  return url;
-});
 </script>
 
 <style lang="scss" scoped>
