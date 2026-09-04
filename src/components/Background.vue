@@ -12,7 +12,7 @@
     <div :class="store.backgroundShow ? 'gray hidden' : 'gray'" />
     <Transition name="fade" mode="out-in">
       <a
-        v-if="store.backgroundShow && store.coverType != '3'"
+        v-if="store.backgroundShow"
         class="down"
         :href="bgUrl"
         target="_blank"
@@ -32,21 +32,32 @@ const bgUrl = ref(null);
 const imgTimeout = ref(null);
 const emit = defineEmits(["loadComplete"]);
 
-// 壁纸随机数
+// 本地兜底壁纸随机数
 // 请依据文件夹内的图片个数修改 Math.random() 后面的第一个数字
 const bgRandom = Math.floor(Math.random() * 10 + 1);
 
-// 更换壁纸链接
-const changeBg = (type) => {
-  if (type == 0) {
-    bgUrl.value = `/images/background${bgRandom}.jpg`;
-  } else if (type == 1) {
-    bgUrl.value = "https://api.dujin.org/bing/1920.php";
-  } else if (type == 2) {
-    bgUrl.value = "https://api.aixiaowai.cn/gqapi/gqapi.php";
-  } else if (type == 3) {
-    bgUrl.value = "https://api.aixiaowai.cn/api/api.php";
-  }
+// 电脑端壁纸接口
+const pcUrls = [
+  "https://t.alcy.cc/ycy",
+  "https://t.alcy.cc/moez",
+  "https://t.alcy.cc/ysz",
+  "https://t.alcy.cc/moe",
+  "https://t.alcy.cc/fj",
+  "https://t.alcy.cc/ys",
+];
+
+// 手机端壁纸接口
+const mobileUrls = [
+  "https://t.alcy.cc/mp",
+  "https://t.alcy.cc/moemp",
+  "https://t.alcy.cc/ysmp",
+];
+
+// 随机获取壁纸链接（按设备自动切换横图/竖图）
+const changeBg = () => {
+  const isMobile = window.innerWidth < 720;
+  const urls = isMobile ? mobileUrls : pcUrls;
+  bgUrl.value = urls[Math.floor(Math.random() * urls.length)];
 };
 
 // 图片加载完成
@@ -79,17 +90,9 @@ const imgLoadError = () => {
   bgUrl.value = `/images/background${bgRandom}.jpg`;
 };
 
-// 监听壁纸切换
-watch(
-  () => store.coverType,
-  (value) => {
-    changeBg(value);
-  },
-);
-
 onMounted(() => {
   // 加载壁纸
-  changeBg(store.coverType);
+  changeBg();
 });
 
 onBeforeUnmount(() => {
