@@ -12,17 +12,23 @@
     </span>
     <span class="sm-hidden">{{ weatherData.weather.windpower }}&nbsp;级</span>
   </div>
+  <div class="weather" v-else-if="loading">
+    <span>天气加载中...</span>
+  </div>
   <div class="weather" v-else>
     <span>天气数据获取失败</span>
   </div>
 </template>
 
 <script setup>
-import { getAdcode, getWeather, getOtherWeather } from "@/api";
-import { Error } from "@icon-park/vue-next";
+import { getAdcode, getWeather, getRegeo, getOtherWeather } from "@/api";
+import { Error as IconError } from "@icon-park/vue-next";
 
 // 高德开发者 Key
 const mainKey = import.meta.env.VITE_WEATHER_KEY;
+
+// 加载状态
+const loading = ref(true);
 
 // 天气数据
 const weatherData = reactive({
@@ -124,53 +130,127 @@ const getWindPower = (kmh) => {
   return "12";
 };
 
+// 使用备用天气接口（wttr.in；可传经纬度精确查询，否则按 IP 定位）
+const loadBackupWeather = async (location) => {
+  console.log("使用备用天气接口", location ? "(精确坐标)" : "(IP 定位)");
+  const result = await getOtherWeather(location);
+  const condition = result.current_condition?.[0] ?? {};
+  const area =
+    result.nearest_area?.[0]?.areaName?.[0]?.value || "未知地区";
+  weatherData.adCode = {
+    city: area,
+  };
+  weatherData.weather = {
+    weather:
+      weatherCodeMap[condition.weatherCode] ||
+      condition.weatherDesc?.[0]?.value ||
+      "未知",
+    temperature: condition.temp_C,
+    winddirection:
+      windDirMap[condition.winddir16Point] || condition.winddir16Point,
+    windpower: getWindPower(condition.windspeedKmph),
+  };
+};
+
+// 浏览器定位获取经纬度（需要 HTTPS 或 localhost，且需用户授权）
+const getCurrentPosition = () =>
+  new Promise((resolve, reject) => {
+    if (!navigator.geolocation) {
+      reject(new Error("浏览器不支持定位"));
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(resolve, reject, {
+      enableHighAccuracy: true,
+      timeout: 10000,
+      maximumAge: 600000,
+    });
+  });
+
 // 获取天气数据
 const getWeatherData = async () => {
   try {
-    // 获取地理位置信息
-    if (!mainKey) {
-      console.log("未配置，使用备用天气接口");
-      const result = await getOtherWeather();
-      console.log(result);
-      const condition = result.current_condition?.[0] ?? {};
-      const area =
-        result.nearest_area?.[0]?.areaName?.[0]?.value || "未知地区";
-      weatherData.adCode = {
-        city: area,
-      };
-      weatherData.weather = {
-        weather:
-          weatherCodeMap[condition.weatherCode] ||
-          condition.weatherDesc?.[0]?.value ||
-          "未知",
-        temperature: condition.temp_C,
-        winddirection:
-          windDirMap[condition.winddir16Point] || condition.winddir16Point,
-        windpower: getWindPower(condition.windspeedKmph),
-      };
-    } else {
-      // 获取 Adcode
+    // 优先使用浏览器精确定位
+    let coords = null;
+    try {
+      coords = (await getCurrentPosition()).coords;
+    } catch (geoError) {
+      console.warn("浏览器定位失败，回退 IP 定位:", geoError);
+    }
+
+    if (coords) {
+      const lngLat = `${coords.longitude},${coords.latitude}`; // 高德用 "经度,纬度"
+      const latLng = `${coords.latitude},${coords.longitude}`; // wttr.in 用 "纬度,经度"
+
+      // 有 key 时优先走高德（中文地名 + 本地化天气，主要覆盖大陆）
+      if (mainKey) {
+        try {
+          const regeo = await getRegeo(mainKey, lngLat);
+          console.log("逆地理编码结果:", regeo);
+          const address = regeo.regeocode?.addressComponent;
+          if (address?.adcode) {
+            const result = await getWeather(mainKey, address.adcode);
+            console.log("浏览器定位天气结果:", result);
+            if (result.lives?.length) {
+              const live = result.lives[0];
+              weatherData.adCode = {
+                city:
+                  address.city || address.province || live.city || "未知地区",
+                adcode: address.adcode,
+              };
+              weatherData.weather = {
+                weather: live.weather,
+                temperature: live.temperature,
+                winddirection: live.winddirection,
+                windpower: live.windpower,
+              };
+              return;
+            }
+          }
+        } catch (err) {
+          console.warn("高德逆地理/天气失败，改用备用接口:", err);
+        }
+        console.log("高德天气无覆盖，改用备用接口精确查询");
+      }
+      // 高德失败或无 key：wttr.in 按坐标精确查询（全球覆盖）
+      await loadBackupWeather(latLng);
+      return;
+    }
+
+    // 无浏览器定位：回退高德 IP 定位
+    if (mainKey) {
       const adCode = await getAdcode(mainKey);
       console.log(adCode);
-      if (adCode.infocode !== "10000") {
-        throw "地区查询失败";
+      const adcode = adCode.adcode;
+      if (
+        adCode.infocode === "10000" &&
+        adcode &&
+        !(Array.isArray(adcode) && adcode.length === 0)
+      ) {
+        const result = await getWeather(mainKey, adcode);
+        console.log("IP 定位天气结果:", result);
+        if (result.lives?.length) {
+          weatherData.adCode = {
+            city: adCode.city || result.lives[0].city || "未知地区",
+            adcode,
+          };
+          weatherData.weather = {
+            weather: result.lives[0].weather,
+            temperature: result.lives[0].temperature,
+            winddirection: result.lives[0].winddirection,
+            windpower: result.lives[0].windpower,
+          };
+          return;
+        }
       }
-      weatherData.adCode = {
-        city: adCode.city,
-        adcode: adCode.adcode,
-      };
-      // 获取天气信息
-      const result = await getWeather(mainKey, weatherData.adCode.adcode);
-      weatherData.weather = {
-        weather: result.lives[0].weather,
-        temperature: result.lives[0].temperature,
-        winddirection: result.lives[0].winddirection,
-        windpower: result.lives[0].windpower,
-      };
     }
+
+    // 最终兜底：wttr.in 按 IP 定位
+    await loadBackupWeather();
   } catch (error) {
     console.error("天气信息获取失败:" + error);
     onError("天气信息获取失败");
+  } finally {
+    loading.value = false;
   }
 };
 
@@ -178,7 +258,7 @@ const getWeatherData = async () => {
 const onError = (message) => {
   ElMessage({
     message,
-    icon: h(Error, {
+    icon: h(IconError, {
       theme: "filled",
       fill: "#efefef",
     }),

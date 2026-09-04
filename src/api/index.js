@@ -67,9 +67,20 @@ export const getWeather = async (key, city) => {
   return await res.json();
 };
 
-// 获取 wttr.in 天气 API（备用，无需 key，按 IP 自动定位）
+// 高德逆地理编码（经纬度 -> adcode/城市名）
+export const getRegeo = async (key, location) => {
+  const res = await fetch(
+    `https://restapi.amap.com/v3/geocode/regeo?key=${key}&location=${location}`,
+  );
+  return await res.json();
+};
+
+// 获取 wttr.in 天气 API（备用，无需 key；可传经纬度精确查询，否则按 IP 定位）
 // https://github.com/chubin/wttr.in
-export const getOtherWeather = async () => {
-  const res = await fetch("https://wttr.in/?format=j1");
+export const getOtherWeather = async (location) => {
+  const url = location
+    ? `https://wttr.in/${location}?format=j1`
+    : "https://wttr.in/?format=j1";
+  const res = await fetch(url);
   return await res.json();
 };
