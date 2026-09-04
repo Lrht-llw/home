@@ -38,16 +38,90 @@ const weatherData = reactive({
   },
 });
 
-// 取出天气平均值
-const getTemperature = (min, max) => {
-  try {
-    // 计算平均值并四舍五入
-    const average = (Number(min) + Number(max)) / 2;
-    return Math.round(average);
-  } catch (error) {
-    console.error("计算温度出现错误：", error);
-    return "NaN";
-  }
+// 天气现象（按 wttr.in 的 weatherCode 映射为中文）
+const weatherCodeMap = {
+  "113": "晴",
+  "116": "多云",
+  "119": "阴",
+  "122": "阴",
+  "143": "雾",
+  "176": "阵雨",
+  "179": "阵雪",
+  "182": "雨夹雪",
+  "200": "雷阵雨",
+  "248": "雾",
+  "260": "冻雾",
+  "263": "毛毛雨",
+  "266": "小雨",
+  "281": "冻毛毛雨",
+  "293": "阵雨",
+  "296": "小雨",
+  "299": "中雨",
+  "302": "中雨",
+  "305": "大雨",
+  "308": "大雨",
+  "311": "冻雨",
+  "314": "强冻雨",
+  "317": "雨夹雪",
+  "320": "雨夹雪",
+  "323": "小雪",
+  "326": "小雪",
+  "329": "中雪",
+  "332": "中雪",
+  "335": "大雪",
+  "338": "大雪",
+  "350": "冰粒",
+  "353": "阵雨",
+  "356": "强阵雨",
+  "359": "暴雨",
+  "362": "阵性雨夹雪",
+  "365": "强阵性雨夹雪",
+  "368": "阵雪",
+  "371": "强阵雪",
+  "374": "冰粒阵雨",
+  "377": "强冰粒阵雨",
+  "386": "雷阵雨",
+  "389": "强雷阵雨",
+  "392": "雷阵雪",
+  "395": "强雷阵雪",
+};
+
+// 风向 16 方位转中文
+const windDirMap = {
+  N: "北",
+  NNE: "东北偏北",
+  NE: "东北",
+  ENE: "东北偏东",
+  E: "东",
+  ESE: "东南偏东",
+  SE: "东南",
+  SSE: "东南偏南",
+  S: "南",
+  SSW: "西南偏南",
+  SW: "西南",
+  WSW: "西南偏西",
+  W: "西",
+  WNW: "西北偏西",
+  NW: "西北",
+  NNW: "西北偏北",
+};
+
+// 风速(km/h)换算为蒲福风力等级
+const getWindPower = (kmh) => {
+  const speed = Number(kmh);
+  if (speed < 1) return "0";
+  if (speed <= 5) return "1";
+  if (speed <= 11) return "2";
+  if (speed <= 19) return "3";
+  if (speed <= 28) return "4";
+  if (speed <= 38) return "5";
+  if (speed <= 49) return "6";
+  if (speed <= 61) return "7";
+  if (speed <= 74) return "8";
+  if (speed <= 88) return "9";
+  if (speed <= 102) return "10";
+  if (speed <= 117) return "11";
+  return "12";
 };
 
 // 获取天气数据
@@ -58,16 +132,21 @@ const getWeatherData = async () => {
       console.log("未配置，使用备用天气接口");
       const result = await getOtherWeather();
       console.log(result);
-      const data = result.result;
+      const condition = result.current_condition?.[0] ?? {};
+      const area =
+        result.nearest_area?.[0]?.areaName?.[0]?.value || "未知地区";
       weatherData.adCode = {
-        city: data.city.City || "未知地区",
-        // adcode: data.city.cityId,
+        city: area,
       };
       weatherData.weather = {
-        weather: data.condition.day_weather,
-        temperature: getTemperature(data.condition.min_degree, data.condition.max_degree),
-        winddirection: data.condition.day_wind_direction,
-        windpower: data.condition.day_wind_power,
+        weather:
+          weatherCodeMap[condition.weatherCode] ||
+          condition.weatherDesc?.[0]?.value ||
+          "未知",
+        temperature: condition.temp_C,
+        winddirection:
+          windDirMap[condition.winddir16Point] || condition.winddir16Point,
+        windpower: getWindPower(condition.windspeedKmph),
       };
     } else {
       // 获取 Adcode

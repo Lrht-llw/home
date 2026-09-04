@@ -67,9 +67,9 @@ export const getWeather = async (key, city) => {
   return await res.json();
 };
 
-// 获取教书先生天气 API
-// https://api.oioweb.cn/doc/weather/GetWeather
+// 获取 wttr.in 天气 API（备用，无需 key，按 IP 自动定位）
+// https://github.com/chubin/wttr.in
 export const getOtherWeather = async () => {
-  const res = await fetch("https://api.oioweb.cn/api/weather/GetWeather");
+  const res = await fetch("https://wttr.in/?format=j1");
   return await res.json();
 };
