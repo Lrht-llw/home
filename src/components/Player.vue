@@ -9,6 +9,7 @@
     :loop="store.playerLoop"
     :order="store.playerOrder"
     :volume="volume"
+    :lrcType="2"
     :showLrc="true"
     :listFolded="listFolded"
     :listMaxHeight="listMaxHeight"
