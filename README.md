@@ -120,8 +120,6 @@ const siteIcon = {
 ```bash
 # 歌曲 API 地址（开发环境用相对路径 /netease，由 Vite 代理转发到本地 API）
 VITE_SONG_API = "/netease"
-# 歌曲服务器 ( netease-网易云, tencent-qq音乐 )
-VITE_SONG_SERVER = "netease"
 # 播放类型 ( song-歌曲, playlist-播放列表, album-专辑, search-搜索, artist-艺术家 )
 VITE_SONG_TYPE = "playlist"
 # 播放 ID（歌单/专辑/歌手 ID，或搜索关键词）
@@ -137,8 +135,6 @@ location /netease/ {
     proxy_pass http://127.0.0.1:3000/;
 }
 ```
-
->其他音乐源（如 QQ 音乐 `tencent`）仍走 Meting 接口，需将 `VITE_SONG_API` 配置为 Meting 服务地址
 
 ### 字体
 

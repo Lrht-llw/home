@@ -100,8 +100,7 @@ const getNeteasePlayerList = async (type, id) => {
 };
 
 // 获取音乐播放列表（对接本地 NeteaseCloudMusicApi / api-enhanced）
-export const getPlayerList = async (server, type, id) => {
-  // server 参数保留以兼容调用方，当前仅对接网易云本地 API
+export const getPlayerList = async (type, id) => {
   return getNeteasePlayerList(type, id);
 };
 

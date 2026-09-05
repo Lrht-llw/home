@@ -53,11 +53,6 @@ const props = defineProps({
       return value >= 0 && value <= 1;
     },
   },
-  // 歌曲服务器 ( netease-网易云, tencent-qq音乐 )
-  songServer: {
-    type: String,
-    default: "netease", //'netease' | 'tencent'
-  },
   // 播放类型 ( song-歌曲, playlist-播放列表, album-专辑, search-搜索, artist-艺术家 )
   songType: {
     type: String,
@@ -88,7 +83,7 @@ const listHeight = computed(() => {
 onMounted(() => {
   nextTick(() => {
     try {
-      getPlayerList(props.songServer, props.songType, props.songId).then((res) => {
+      getPlayerList(props.songType, props.songId).then((res) => {
         console.log(res);
         // 更改播放器加载状态
         store.musicIsOk = true;
