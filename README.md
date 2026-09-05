@@ -110,21 +110,35 @@ const siteIcon = {
 
 ### 音乐
 
->本项目采用了基于 `MetingJS` 的 `Aplayer` 音乐播放器，可实现快速自定义歌单  
->*仅支持 **中国大陆地区**
+>本项目采用基于 `APlayer` 的音乐播放器。网易云音乐已改为对接本地 `NeteaseCloudMusicApi`（推荐增强版 [api-enhanced](https://github.com/NeteaseCloudMusicApiEnhanced/api-enhanced)，支持解灰/换源），可实现歌单、专辑、搜索、歌手等多种播放方式
 
-请在 `.env` 文件中更改歌曲相关参数即可实现自定义歌单列表
+#### 网易云（本地 API）
+
+1. 部署并启动音乐 API 服务（默认端口 `3000`，可用 `PORT` 环境变量修改）
+2. 在 `.env` 中配置歌曲参数：
 
 ```bash
-# 歌曲 API 地址
-VITE_SONG_API = "https://api-meting.imsyy.top"
+# 歌曲 API 地址（开发环境用相对路径 /netease，由 Vite 代理转发到本地 API）
+VITE_SONG_API = "/netease"
 # 歌曲服务器 ( netease-网易云, tencent-qq音乐 )
 VITE_SONG_SERVER = "netease"
 # 播放类型 ( song-歌曲, playlist-播放列表, album-专辑, search-搜索, artist-艺术家 )
 VITE_SONG_TYPE = "playlist"
-# 播放 ID
+# 播放 ID（歌单/专辑/歌手 ID，或搜索关键词）
 VITE_SONG_ID = "7452421335"
 ```
+
+#### 部署说明
+
+`/netease` 相对路径由 Vite 开发代理转发，`pnpm build` 后需通过反向代理转发到本地 API（或直接将 `VITE_SONG_API` 填为 API 完整地址，如 `http://服务器IP:3000`）：
+
+```nginx
+location /netease/ {
+    proxy_pass http://127.0.0.1:3000/;
+}
+```
+
+>其他音乐源（如 QQ 音乐 `tencent`）仍走 Meting 接口，需将 `VITE_SONG_API` 配置为 Meting 服务地址
 
 ### 字体
 

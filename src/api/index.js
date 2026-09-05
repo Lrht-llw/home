@@ -1,5 +1,4 @@
 // import axios from "axios";
-import fetchJsonp from "fetch-jsonp";
 
 /**
  * 音乐播放器
@@ -100,44 +99,10 @@ const getNeteasePlayerList = async (type, id) => {
   return list.filter((item) => item.url);
 };
 
-// 获取音乐播放列表
+// 获取音乐播放列表（对接本地 NeteaseCloudMusicApi / api-enhanced）
 export const getPlayerList = async (server, type, id) => {
-  // 网易云走本地 api-enhanced 接口
-  if (server === "netease") {
-    return getNeteasePlayerList(type, id);
-  }
-
-  // 其他音乐源（如 QQ 音乐）走 Meting 接口
-  const res = await fetch(
-    `${import.meta.env.VITE_SONG_API}?server=${server}&type=${type}&id=${id}`,
-  );
-  const data = await res.json();
-
-  if (data[0].url.startsWith("@")) {
-    // eslint-disable-next-line no-unused-vars
-    const [handle, jsonpCallback, jsonpCallbackFunction, url] = data[0].url.split("@").slice(1);
-    const jsonpData = await fetchJsonp(url).then((res) => res.json());
-    const domain = (
-      jsonpData.req_0.data.sip.find((i) => !i.startsWith("http://ws")) ||
-      jsonpData.req_0.data.sip[0]
-    ).replace("http://", "https://");
-
-    return data.map((v, i) => ({
-      name: v.name || v.title,
-      artist: v.artist || v.author,
-      url: domain + jsonpData.req_0.data.midurlinfo[i].purl,
-      cover: v.cover || v.pic,
-      lrc: v.lrc,
-    }));
-  } else {
-    return data.map((v) => ({
-      name: v.name || v.title,
-      artist: v.artist || v.author,
-      url: v.url,
-      cover: v.cover || v.pic,
-      lrc: v.lrc,
-    }));
-  }
+  // server 参数保留以兼容调用方，当前仅对接网易云本地 API
+  return getNeteasePlayerList(type, id);
 };
 
 /**
