@@ -28,5 +28,10 @@
     "icon": "Fish",
     "name": "爱发电",
     "link": "https://afdian.com/a/lrht-llw"
+  },
+  {
+    "icon": "Music",
+    "name": "音乐api",
+    "link": "https://wyyapi.lrht.cc/"
   }
 ]
